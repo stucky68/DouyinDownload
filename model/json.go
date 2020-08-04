@@ -4,8 +4,9 @@ type DownloadConfig struct {
 	StartDateTime string `json:"start_date_time"`
 	EndDateTime   string `json:"end_date_time"`
 	Flag          bool   `json:"flag"`
-	CollectCount  int `json:"collect_count"`
+	CollectCount  int    `json:"collect_count"`
 	UA            string `json:"UA"`
+	ThreadNum     int    `json:"ThreadNum"`
 }
 
 type Data struct {

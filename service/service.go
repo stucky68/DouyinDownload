@@ -23,24 +23,24 @@ var startDateTime int64
 var endDateTime int64
 var UA string
 var Collect_count int
+var Config model.DownloadConfig
 
 func ParserConfig(data string) {
-	var config model.DownloadConfig
-	err := json.Unmarshal([]byte(data), &config)
+	err := json.Unmarshal([]byte(data), &Config)
 	if err != nil {
 		panic(err)
 	}
 
-	tm1, _ := time.Parse("2006-01-02", config.StartDateTime)
+	tm1, _ := time.Parse("2006-01-02", Config.StartDateTime)
 	startDateTime = tm1.Unix()
 
-	tm2, _ := time.Parse("2006-01-02", config.EndDateTime)
+	tm2, _ := time.Parse("2006-01-02", Config.EndDateTime)
 	endDateTime = tm2.Unix()
 
-	downloadFlag = config.Flag
-	UA = config.UA
+	downloadFlag = Config.Flag
+	UA = Config.UA
 
-	Collect_count = config.CollectCount
+	Collect_count = Config.CollectCount
 }
 
 func Download(getUrl, saveFile string) error {

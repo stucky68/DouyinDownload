@@ -1,6 +1,7 @@
 package main
 
 import (
+	"DouyinDownload/TaskQueue"
 	"DouyinDownload/service"
 	"bytes"
 	"encoding/base64"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type GetSignaturePara struct {
@@ -89,42 +91,69 @@ func GetAllFile(pathname string) error {
 	return err
 }
 
+
+type Task struct {
+	UserID string
+	Maxcursor int64
+}
+
+// Process ..
+func (task *Task) Process() {
+	os.MkdirAll("download/"+task.UserID, os.ModePerm)
+	max_cursor := task.Maxcursor
+	count := 0
+	log.Println(task.UserID + "正在下载")
+	for {
+		err, d := service.GetVideo(task.UserID, "", "", max_cursor)
+		if err != nil {
+			continue
+		}
+		service.HandleJson(d, task.UserID, &count)
+		if count > service.Collect_count {
+			break
+		}
+
+		if d.HasMore {
+			//签名失效 重新获取
+			if d.MinCursor == 0 && d.MaxCursor == 0 {
+				//signature, dytk = GetSignature(userID, service.UA)
+				log.Println("签名失效")
+			} else {
+				max_cursor = d.MaxCursor
+			}
+		} else {
+			break
+		}
+	}
+}
+
 func main() {
 	fmt.Println("当前版本2020-06-23临时版")
+
+	startTime := int64(0)
+	fmt.Println("请输入截止时间:")
+	_, err := fmt.Scanf("%d", &startTime)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("截止时间:", startTime)
+
 	//time.Sleep(time.Second * 3)
 	service.ParserConfig(read3("./config.json"))
 	user := read3("./user.txt")
 	uids := strings.Split(user, "\r\n")
 	//uids := []string{"62743508192"}
+
+	taskQ := TaskQueue.NewTaskQueue(len(uids), service.Config.ThreadNum)
+	taskQ.Run()
+
 	for _, userID := range uids {
-		os.MkdirAll("download/"+userID, os.ModePerm)
+		taskQ.PushItem(&Task{userID, startTime})
 		//signature, dytk := GetSignature(userID, service.UA)
-		max_cursor := int64(0)
-		count := 0
-		log.Println(userID + "正在下载")
-		for {
-			err, d := service.GetVideo(userID, "", "", max_cursor)
-			if err != nil {
-				continue
-			}
-			service.HandleJson(d, userID, &count)
+		//log.Println(userID + "下载完毕")
+	}
 
-			if count > service.Collect_count {
-				break
-			}
-
-			if d.HasMore {
-				//签名失效 重新获取
-				if d.MinCursor == 0 && d.MaxCursor == 0 {
-					//signature, dytk = GetSignature(userID, service.UA)
-					log.Println("签名失效")
-				} else {
-					max_cursor = d.MaxCursor
-				}
-			} else {
-				break
-			}
-		}
-		log.Println(userID + "下载完毕")
+	for {
+		time.Sleep(time.Second)
 	}
 }
