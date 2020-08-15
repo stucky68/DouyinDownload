@@ -9,6 +9,16 @@ type DownloadConfig struct {
 	ThreadNum     int    `json:"ThreadNum"`
 }
 
+type VideoData struct {
+	AwemeList  []VideoItem `json:"item_list"`
+}
+
+type VideoItem struct {
+	Desc     string `json:"desc"`
+	Duration int   `json:"duration"`
+	CreateTime int64 `json:"create_time"`
+}
+
 type Data struct {
 	StatusCode int64  `json:"status_code"`
 	MinCursor  int64  `json:"min_cursor"`

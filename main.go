@@ -128,7 +128,7 @@ func (task *Task) Process() {
 }
 
 func main() {
-	fmt.Println("当前版本2020-06-23临时版")
+	fmt.Println("当前版本2020-08-15")
 
 	startTime := int64(0)
 	fmt.Println("请输入截止时间:")

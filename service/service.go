@@ -104,6 +104,41 @@ func FilterEmoji(content string) string {
 	return newContent
 }
 
+func getVideoDuration(itemID string) (error, model.VideoData) {
+	client := &http.Client{}
+	url := "https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=" + itemID
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err, model.VideoData{}
+	}
+	rand.Seed(time.Now().Unix())
+	s := strconv.Itoa(rand.Intn(1000))
+
+	req.Header.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
+	req.Header.Add("accept-language", "zh-CN,zh;q=0.9,en;q=0.8")
+	req.Header.Add("cache-control", "max-age=0")
+	req.Header.Add("cookie", "_ga=GA1.2.938284732.1578806304; _gid=GA1.2.1428838914.1578806305")
+	req.Header.Add("upgrade-insecure-requests", "1")
+	req.Header.Add("user-agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/" + s + ".36 (KHTML, like Gecko) Chrome/75.0.3770.100 Mobile Safari/537.36")
+	req.Header.Add("Host", "www.iesdouyin.com")
+	res, err := client.Do(req)
+	if err != nil {
+		return err, model.VideoData{}
+	}
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err, model.VideoData{}
+	}
+	var data model.VideoData
+	err = json.Unmarshal(b, &data)
+	if err != nil {
+		return err, model.VideoData{}
+	}
+	return nil, data
+}
+
+
 func HandleJson(data model.Data, uid string, count *int) {
 	for _, item := range data.AwemeList {
 
@@ -119,11 +154,24 @@ func HandleJson(data model.Data, uid string, count *int) {
 		item.Desc = strings.ReplaceAll(item.Desc, "\r", "")
 		item.Desc = strings.ReplaceAll(item.Desc, "\n", "")
 		item.Desc = FilterEmoji(item.Desc)
-
 		localVideo := "download/" + uid + "/" + item.Desc + item.AwemeId[0:13] + ".mp4"
 
-		index := strings.Index(item.Video.Origin_cover.Uri, "_")
-		videoTime, _ := strconv.ParseInt(item.Video.Origin_cover.Uri[index+1:], 10, 64)
+
+		err, videoData := getVideoDuration(item.AwemeId)
+		if err != nil {
+			continue
+		}
+
+		videoTime := int64(0)
+
+		if len(videoData.AwemeList) > 0 {
+			if videoData.AwemeList[0].Duration < 5 * 1000 || videoData.AwemeList[0].Duration > 300 * 1000 {
+				continue
+			}
+			videoTime = videoData.AwemeList[0].CreateTime
+		} else {
+			continue
+		}
 
 		downFunc := func() int {
 			if utils.IsExist(localVideo) == false {
