@@ -139,7 +139,7 @@ func getVideoDuration(itemID string) (error, model.VideoData) {
 }
 
 
-func HandleJson(data model.Data, uid string, count *int) {
+func HandleJson(data model.Data, uid string, count *int, flag *bool) {
 	for _, item := range data.AwemeList {
 
 		item.Desc = strings.ReplaceAll(item.Desc, ":", "")
@@ -155,7 +155,6 @@ func HandleJson(data model.Data, uid string, count *int) {
 		item.Desc = strings.ReplaceAll(item.Desc, "\n", "")
 		item.Desc = FilterEmoji(item.Desc)
 		localVideo := "download/" + uid + "/" + item.Desc + item.AwemeId[0:13] + ".mp4"
-
 
 		err, videoData := getVideoDuration(item.AwemeId)
 		if err != nil {
@@ -198,6 +197,9 @@ func HandleJson(data model.Data, uid string, count *int) {
 		if downloadFlag {
 			if videoTime > startDateTime && videoTime < endDateTime {
 				downFunc()
+			} else if videoTime < startDateTime {
+				*flag = true
+				return
 			}
 		} else {
 			downFunc()
@@ -253,6 +255,7 @@ func GetData(url string) (tac, dytk string, err error) {
 func GetVideo(user_id, signature, dytk string, max_cursor int64) (error, model.Data) {
 	client := &http.Client{}
 	url := "https://www.iesdouyin.com/web/api/v2/aweme/post/?user_id=" + user_id + "&sec_uid=&count=20&max_cursor=" + strconv.FormatInt(max_cursor, 10) + "&aid=1128&_signature=" + signature + "&dytk=" + dytk
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err, model.Data{}

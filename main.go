@@ -31,10 +31,9 @@ func GetSignature(userID, ua string) (string, string) {
 	tac := ""
 	dytk := ""
 
-	tac, dytk, err := service.GetData("https://www.iesdouyin.com/share/user/" + userID)
+	tac, dytk, err := service.GetData("https://www.amemv.com/share/user/" + userID)
 	for err != nil {
-		fmt.Println(err)
-		tac, dytk, err = service.GetData("https://www.iesdouyin.com/share/user/" + userID)
+		tac, dytk, err = service.GetData("https://www.amemv.com/share/user/" + userID)
 	}
 
 	client := &http.Client{}
@@ -99,24 +98,28 @@ type Task struct {
 
 // Process ..
 func (task *Task) Process() {
+
 	os.MkdirAll("download/"+task.UserID, os.ModePerm)
 	max_cursor := task.Maxcursor
 	count := 0
+	flag := false
 	log.Println(task.UserID + "正在下载")
 	for {
-		err, d := service.GetVideo(task.UserID, "", "", max_cursor)
+		signature, dytk := GetSignature(task.UserID, service.UA)
+
+		err, d := service.GetVideo(task.UserID, signature, dytk, max_cursor)
 		if err != nil {
 			continue
 		}
-		service.HandleJson(d, task.UserID, &count)
-		if count > service.Collect_count {
+		service.HandleJson(d, task.UserID, &count, &flag)
+		if count > service.Collect_count || flag {
 			break
 		}
 
 		if d.HasMore {
 			//签名失效 重新获取
 			if d.MinCursor == 0 && d.MaxCursor == 0 {
-				//signature, dytk = GetSignature(userID, service.UA)
+				signature, dytk = GetSignature(task.UserID, service.UA)
 				log.Println("签名失效")
 			} else {
 				max_cursor = d.MaxCursor
@@ -128,7 +131,7 @@ func (task *Task) Process() {
 }
 
 func main() {
-	fmt.Println("当前版本2020-08-15")
+	fmt.Println("当前版本2020-09-03")
 
 	startTime := int64(0)
 	fmt.Println("请输入截止时间:")
