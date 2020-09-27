@@ -164,7 +164,7 @@ func HandleJson(data model.Data, uid string, count *int, flag *bool) {
 		videoTime := int64(0)
 
 		if len(videoData.AwemeList) > 0 {
-			if videoData.AwemeList[0].Duration < 5 * 1000 || videoData.AwemeList[0].Duration > 300 * 1000 {
+			if videoData.AwemeList[0].Duration < 11 * 1000 || videoData.AwemeList[0].Duration > 300 * 1000 {
 				continue
 			}
 			videoTime = videoData.AwemeList[0].CreateTime
@@ -177,6 +177,12 @@ func HandleJson(data model.Data, uid string, count *int, flag *bool) {
 				log.Println("开始处理数据:", item.Desc, item.AwemeId)
 				//fmt.Println(item.Video.PlayAddr.UrlList[0])
 				err := downloadHttpFile("https://aweme.snssdk.com/aweme/v1/play/?video_id="+item.Video.Vid+"&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source=PackSourceEnum_PUBLISH", localVideo)
+				if len(item.Video.OriginCover.UrlList) > 0 {
+					Download(item.Video.OriginCover.UrlList[0], "download/" + uid + "/" + item.AwemeId[0:13] + ".jpg")
+				} else {
+					Download(item.Video.Cover.UrlList[0], "download/" + uid + "/" + item.AwemeId[0:13] + ".jpg")
+				}
+
 				//err := downloadHttpFile(item.Video.PlayAddr.UrlList[0], localVideo)
 				if err != nil {
 					log.Println("下载视频失败:", err)

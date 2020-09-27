@@ -105,9 +105,9 @@ func (task *Task) Process() {
 	flag := false
 	log.Println(task.UserID + "正在下载")
 	for {
-		signature, dytk := GetSignature(task.UserID, service.UA)
+		//signature, dytk := GetSignature(task.UserID, service.UA)
 
-		err, d := service.GetVideo(task.UserID, signature, dytk, max_cursor)
+		err, d := service.GetVideo(task.UserID, "", "", max_cursor)
 		if err != nil {
 			continue
 		}
@@ -119,7 +119,7 @@ func (task *Task) Process() {
 		if d.HasMore {
 			//签名失效 重新获取
 			if d.MinCursor == 0 && d.MaxCursor == 0 {
-				signature, dytk = GetSignature(task.UserID, service.UA)
+				//signature, dytk = GetSignature(task.UserID, service.UA)
 				log.Println("签名失效")
 			} else {
 				max_cursor = d.MaxCursor
@@ -131,7 +131,7 @@ func (task *Task) Process() {
 }
 
 func main() {
-	fmt.Println("当前版本2020-09-03")
+	fmt.Println("当前版本2020-09-27")
 
 	startTime := int64(0)
 	fmt.Println("请输入截止时间:")

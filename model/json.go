@@ -55,11 +55,11 @@ type OriginCover struct {
 }
 
 type video struct {
-	DownloadAddr uriStr      `json:"download_addr"`
-	PlayAddr     uriStr      `json:"play_addr"`
-	Origin_cover OriginCover `json:"origin_cover"`
-	Cover        uriStr      `json:"cover"`
-	Vid          string      `json:"vid"`
+	DownloadAddr uriStr `json:"download_addr"`
+	PlayAddr     uriStr `json:"play_addr"`
+	OriginCover  uriStr `json:"origin_cover"`
+	Cover        uriStr `json:"cover"`
+	Vid          string `json:"vid"`
 }
 
 type longVideo struct {
