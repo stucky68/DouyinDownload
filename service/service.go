@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -18,11 +17,9 @@ import (
 
 var httpData string
 
-var downloadFlag bool
 var startDateTime int64
 var endDateTime int64
-var UA string
-var Collect_count int
+
 var Config model.DownloadConfig
 
 func ParserConfig(data string) {
@@ -31,16 +28,11 @@ func ParserConfig(data string) {
 		panic(err)
 	}
 
-	tm1, _ := time.Parse("2006-01-02", Config.StartDateTime)
+	tm1, _ := time.ParseInLocation("2006-01-02", Config.StartDateTime, time.Local)
 	startDateTime = tm1.Unix()
 
-	tm2, _ := time.Parse("2006-01-02", Config.EndDateTime)
+	tm2, _ := time.ParseInLocation("2006-01-02", Config.EndDateTime, time.Local)
 	endDateTime = tm2.Unix()
-
-	downloadFlag = Config.Flag
-	UA = Config.UA
-
-	Collect_count = Config.CollectCount
 }
 
 func Download(getUrl, saveFile string) error {
@@ -85,7 +77,7 @@ func downloadHttpFile(videoUrl string, localVideo string) error {
 		if err == nil {
 			break
 		}
-		log.Println(err)
+		utils.Log(err)
 		timeout++
 		if timeout > 5 {
 			return errors.New("超时三次失败")
@@ -164,7 +156,7 @@ func HandleJson(data model.Data, uid string, count *int, flag *bool) {
 		videoTime := int64(0)
 
 		if len(videoData.AwemeList) > 0 {
-			if videoData.AwemeList[0].Duration < 11 * 1000 || videoData.AwemeList[0].Duration > 300 * 1000 {
+			if videoData.AwemeList[0].Duration < Config.MinDuration * 1000 || videoData.AwemeList[0].Duration > Config.MaxDuration * 1000 {
 				continue
 			}
 			videoTime = videoData.AwemeList[0].CreateTime
@@ -174,33 +166,34 @@ func HandleJson(data model.Data, uid string, count *int, flag *bool) {
 
 		downFunc := func() int {
 			if utils.IsExist(localVideo) == false {
-				log.Println("开始处理数据:", item.Desc, item.AwemeId)
-				//fmt.Println(item.Video.PlayAddr.UrlList[0])
+				utils.Log("开始处理数据:", item.Desc, item.AwemeId)
+				//utils.log(item.Video.PlayAddr.UrlList[0])
 				err := downloadHttpFile("https://aweme.snssdk.com/aweme/v1/play/?video_id="+item.Video.Vid+"&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source=PackSourceEnum_PUBLISH", localVideo)
-				if len(item.Video.OriginCover.UrlList) > 0 {
-					Download(item.Video.OriginCover.UrlList[0], "download/" + uid + "/" + item.AwemeId[0:13] + ".jpg")
-				} else {
-					Download(item.Video.Cover.UrlList[0], "download/" + uid + "/" + item.AwemeId[0:13] + ".jpg")
+				if len(item.Video.Cover.UrlList) > 0 {
+					err := downloadHttpFile(item.Video.Cover.UrlList[0], "download/" + uid + "/" + item.AwemeId[0:13] + ".jpg")
+					if err != nil {
+						utils.Log("下载封面失败:", err)
+					}
 				}
 
 				//err := downloadHttpFile(item.Video.PlayAddr.UrlList[0], localVideo)
 				if err != nil {
-					log.Println("下载视频失败:", err)
+					utils.Log("下载视频失败:", err)
 				} else {
-					log.Println("下载视频成功:", localVideo)
+					utils.Log("下载视频成功:", localVideo)
 					*count++
 				}
 			} else {
-				log.Println(item.Desc + " " + localVideo + "文件已存在，跳过")
+				utils.Log(item.Desc + " " + localVideo + "文件已存在，跳过")
 			}
 			return *count
 		}
 
-		if *count >= Collect_count {
+		if *count >= Config.CollectCount {
 			return
 		}
 
-		if downloadFlag {
+		if Config.Flag {
 			if videoTime > startDateTime && videoTime < endDateTime {
 				downFunc()
 			} else if videoTime < startDateTime {
@@ -271,7 +264,7 @@ func GetVideo(user_id, signature, dytk string, max_cursor int64) (error, model.D
 	req.Header.Add("cache-control", "max-age=0")
 	req.Header.Add("cookie", "_ga=GA1.2.938284732.1578806304; _gid=GA1.2.1428838914.1578806305")
 	req.Header.Add("upgrade-insecure-requests", "1")
-	req.Header.Add("user-agent", UA)
+	req.Header.Add("user-agent", Config.UA)
 	req.Header.Add("Host", "www.iesdouyin.com")
 	res, err := client.Do(req)
 	if err != nil {

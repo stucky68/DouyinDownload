@@ -7,6 +7,8 @@ type DownloadConfig struct {
 	CollectCount  int    `json:"collect_count"`
 	UA            string `json:"UA"`
 	ThreadNum     int    `json:"ThreadNum"`
+	MinDuration   int    `json:"min_duration"`
+	MaxDuration   int    `json:"max_duration"`
 }
 
 type VideoData struct {

@@ -3,12 +3,12 @@ package main
 import (
 	"DouyinDownload/TaskQueue"
 	"DouyinDownload/service"
+	"DouyinDownload/utils"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -84,7 +84,7 @@ func GetAllFile(pathname string) error {
 			newPath := pathname + "/" + service.FilterEmoji(strings.ReplaceAll(fi.Name(), ".mp4", "")) + ".mp4"
 
 			os.Rename(oldPath, newPath)
-			fmt.Println(oldPath, newPath)
+			utils.Log(oldPath, newPath)
 		}
 	}
 	return err
@@ -103,7 +103,7 @@ func (task *Task) Process() {
 	max_cursor := task.Maxcursor
 	count := 0
 	flag := false
-	log.Println(task.UserID + "正在下载")
+	utils.Log(task.UserID + "正在下载")
 	for {
 		//signature, dytk := GetSignature(task.UserID, service.UA)
 
@@ -112,7 +112,7 @@ func (task *Task) Process() {
 			continue
 		}
 		service.HandleJson(d, task.UserID, &count, &flag)
-		if count > service.Collect_count || flag {
+		if count > service.Config.CollectCount || flag {
 			break
 		}
 
@@ -120,7 +120,7 @@ func (task *Task) Process() {
 			//签名失效 重新获取
 			if d.MinCursor == 0 && d.MaxCursor == 0 {
 				//signature, dytk = GetSignature(task.UserID, service.UA)
-				log.Println("签名失效")
+				utils.Log("签名失效")
 			} else {
 				max_cursor = d.MaxCursor
 			}
@@ -128,24 +128,25 @@ func (task *Task) Process() {
 			break
 		}
 	}
+	utils.Log(task.UserID + "下载完毕")
 }
 
 func main() {
-	fmt.Println("当前版本2020-09-27")
+	utils.Log("当前版本2020-10-29")
 
 	startTime := int64(0)
-	fmt.Println("请输入截止时间:")
+	utils.Log("请输入截止时间:")
 	_, err := fmt.Scanf("%d", &startTime)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("截止时间:", startTime)
+	utils.Log("截止时间:", startTime)
 
 	//time.Sleep(time.Second * 3)
 	service.ParserConfig(read3("./config.json"))
 	user := read3("./user.txt")
 	uids := strings.Split(user, "\r\n")
-	//uids := []string{"62743508192"}
+	//uids := []string{"60305626883"}
 
 	taskQ := TaskQueue.NewTaskQueue(len(uids), service.Config.ThreadNum)
 	taskQ.Run()

@@ -26,7 +26,7 @@ func TestGetAllFile(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(filepath.Base(os.Args[1]), duration)
+	utils.log(filepath.Base(os.Args[1]), duration)
 }
 
 // GetMP4Duration 获取视频时长，以秒计
