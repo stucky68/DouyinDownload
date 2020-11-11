@@ -178,7 +178,7 @@ func HandleJson(data model.Data, uid string, count *int, flag *bool) {
 
 				//err := downloadHttpFile(item.Video.PlayAddr.UrlList[0], localVideo)
 				if err != nil {
-					utils.Log("下载视频失败:", err)
+					utils.Log(uid + "下载视频失败:", err)
 				} else {
 					utils.Log("下载视频成功:", localVideo)
 					*count++

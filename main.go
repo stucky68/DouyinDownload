@@ -132,7 +132,7 @@ func (task *Task) Process() {
 }
 
 func main() {
-	utils.Log("当前版本2020-10-29")
+	utils.Log("当前版本2020-11-11")
 
 	startTime := int64(0)
 	utils.Log("请输入截止时间:")
